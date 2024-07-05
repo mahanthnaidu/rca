@@ -47,20 +47,26 @@ class CustomRandomWalk(RandomWalk):
             graph[metric]["probs"] = w / sum(w)
         return graph
 
-def run_random_walk_rca(graph_df, anomalous_metrics, abnormal_df,root_cause_top_k):
+def run_random_walk_rca(graph_df, normal_df, anomalous_metrics, abnormal_df,root_cause_top_k,dt_hr_df):
     config = RandomWalkConfig(graph=graph_df)
     rw_rca = CustomRandomWalk(config)
+    # rw_rca.train(normal_df)
+    # random walk needs no training
     for index, row in abnormal_df.iterrows():
         single_row_df = pd.DataFrame([row])
         root_causes = rw_rca.find_root_causes(anomalous_metrics=anomalous_metrics, df=single_row_df,root_cause_top_k=root_cause_top_k)
-        print(f"Random Walk RCA Root Causes for row {index} are:")
+        print(f"Date-Hour: {dt_hr_df['dt_hr'].iloc[index]},Random Walk RCA Root Causes for row {index} are:")
         for node in root_causes.root_cause_nodes:
-            print(node)
+            print('Root Cause: ' + node[0] + ', Root Cause Value: ' + str(node[1]))
+        # print(root_causes)
 
-def random_walk_func(graph_df,abnormal_df,root_cause_top_k):
+def random_walk_func(graph_df,normal_df,abnormal_df,root_cause_top_k):
     del_columns = [abnormal_df.columns[0],'anomaly']
+    dt_hr_df = abnormal_df[['dt_hr']]
     abnormal_df = abnormal_df.drop(columns = del_columns)
+    normal_df = normal_df.drop(columns = del_columns)
     anomalous_metrics = [abnormal_df.columns[0]]
-    run_random_walk_rca(graph_df=graph_df,anomalous_metrics=anomalous_metrics,abnormal_df=abnormal_df,root_cause_top_k=root_cause_top_k)
+    # print('Anomalous Metrics : ' + str(anomalous_metrics[0]))
+    run_random_walk_rca(graph_df=graph_df,normal_df=normal_df,anomalous_metrics=anomalous_metrics,abnormal_df=abnormal_df,root_cause_top_k=root_cause_top_k,dt_hr_df=dt_hr_df)
     return 
     
